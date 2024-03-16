@@ -1103,6 +1103,12 @@ void RayTracedAO::bilateral_blur(dw::vk::CommandBuffer::Ptr cmd_buf)
             color.float32[3] = 1.0f;
 
             vkCmdClearColorImage(cmd_buf->handle(), m_bilateral_blur.image[0]->handle(), VK_IMAGE_LAYOUT_GENERAL, &color, 1, &subresource_range);
+
+            std::vector<VkImageMemoryBarrier> image_barriers = {
+                image_memory_barrier(m_bilateral_blur.image[0], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT)
+            };
+
+            pipeline_barrier(cmd_buf, {}, image_barriers, {}, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
         }
 
         vkCmdBindPipeline(cmd_buf->handle(), VK_PIPELINE_BIND_POINT_COMPUTE, m_bilateral_blur.pipeline->handle());
@@ -1156,6 +1162,12 @@ void RayTracedAO::bilateral_blur(dw::vk::CommandBuffer::Ptr cmd_buf)
             color.float32[3] = 1.0f;
 
             vkCmdClearColorImage(cmd_buf->handle(), m_bilateral_blur.image[1]->handle(), VK_IMAGE_LAYOUT_GENERAL, &color, 1, &subresource_range);
+
+            std::vector<VkImageMemoryBarrier> image_barriers = {
+                image_memory_barrier(m_bilateral_blur.image[1], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT)
+            };
+
+            pipeline_barrier(cmd_buf, {}, image_barriers, {}, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
         }
 
         vkCmdBindPipeline(cmd_buf->handle(), VK_PIPELINE_BIND_POINT_COMPUTE, m_bilateral_blur.pipeline->handle());

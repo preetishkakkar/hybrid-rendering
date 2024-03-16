@@ -1161,16 +1161,16 @@ void RayTracedShadows::a_trous_filter(dw::vk::CommandBuffer::Ptr cmd_buf)
         if (i == 0)
         {
             std::vector<VkImageMemoryBarrier> image_barriers = {
-                image_memory_barrier(m_a_trous.image[write_idx], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresource_range, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT)
+                image_memory_barrier(m_a_trous.image[write_idx], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresource_range, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT)
             };
 
-            pipeline_barrier(cmd_buf, {}, image_barriers, {}, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+            pipeline_barrier(cmd_buf, {}, image_barriers, {}, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT);
         }
         else
         {
             std::vector<VkImageMemoryBarrier> image_barriers = {
                 image_memory_barrier(m_a_trous.image[read_idx], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT),
-                image_memory_barrier(m_a_trous.image[write_idx], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresource_range, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT)
+                image_memory_barrier(m_a_trous.image[write_idx], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresource_range, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT)
             };
 
             pipeline_barrier(cmd_buf, {}, image_barriers, {}, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT);
@@ -1187,6 +1187,12 @@ void RayTracedShadows::a_trous_filter(dw::vk::CommandBuffer::Ptr cmd_buf)
             color.float32[3] = 1.0f;
 
             vkCmdClearColorImage(cmd_buf->handle(), m_a_trous.image[write_idx]->handle(), VK_IMAGE_LAYOUT_GENERAL, &color, 1, &subresource_range);
+
+            std::vector<VkImageMemoryBarrier> image_barriers = {
+                image_memory_barrier(m_a_trous.image[write_idx], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT)
+            };
+
+            pipeline_barrier(cmd_buf, {}, image_barriers, {}, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
         }
 
         {
